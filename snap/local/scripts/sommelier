@@ -393,7 +393,7 @@ if [ -f "${WINEPREFIX}/.update-timestamp" ]; then
 fi
 
 # Initialise wine
-if [ ! -f "${WINEPREFIX}/drive_c/windows/win.ini" ]; then
+if [ ! -f "${WINEPREFIX}/drive_c/windows/system.ini" ]; then
   # Create wine cache dir
   ensure_dir_exists ${XDG_CACHE_HOME}/wine
   # Create the WINE environment
@@ -415,13 +415,11 @@ wait_for_async_execs
 
 # Launch wineboot/winecfg/winetricks if requested.
 # If the executable exists then launch it otherwise install it then lauch it.
-if [[ ${WINE_EXE} = *"winecfg"* ]] || [[ ${WINE_EXE} = *"wineboot"* ]] || [[ ${WINE_EXE} = *"winetricks"* ]]; then
   echo "env WINEARCH=\"${WINEARCH}\" WINEPREFIX=\"${WINEPREFIX}\" \"$@\""
   env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "$@"
-elif [ -e "${WINE_EXE}" ]; then
-	echo "launch ${WINE_EXE}"
-  launch_app
-else
-	echo "install"
+if [ ! -e "${WINEPREFIX}/drive_c/windows/system32/cards32.dll" ]; then
   install_app
 fi
+
+echo "launch ${WINE_EXE}"
+launch_app
