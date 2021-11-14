@@ -1,0 +1,139 @@
+name: scorpion
+version: '1.8.0'
+summary: Scorpion solitare card game
+description: |
+  This is a 2001 era Windows patience/solitare card game.
+  
+  The basic premise of Scorpion is, as is often the case with patience games,
+  to end up with four columns of cards going from King at the bottom of the
+  stack to the Ace at the top. Scorpion differs from most games in that to move
+  a card, not only must the sequence be correct (ie. put a nine on top of a
+  ten) but the suits must also match. This makes it a lot more tricky to
+  complete Scorpion.
+  
+  There are two possible starting points with Scorpion. The board is arranged
+  as seven columns of seven cards each The two different starts are defined by
+  the geometry of the cards that are hidden.
+  
+  There are twelve hidden cards and they can be arranged in three columns of
+  four cards or four columns of three cards. These two setups are referred to
+  as "3 x 4" and "4 x 3" games respectively.
+  
+  Seven columns of seven cards leaves us with three cards left over. These can
+  be played at any time and will be placed on the leftmost three columns. To
+  play the "next 3" cards, click on the "Next Three" button or click anywhere
+  with the right mouse button.
+  
+  Only Kings can be placed into an empty column. Nothing can be placed upon an
+  Ace.
+  
+  Make use of the "Moves Left" button which tells you how many moves are
+  currently possible (not how many are left in the game!) and the "Undo"
+  button.
+  
+  If you want the computer to play for you, type *computer* when the window is
+  selected.
+
+grade: stable
+confinement: strict
+architectures:
+  - build-on: amd64
+    run-on: [amd64, i386]
+base: core18
+
+plugs:
+  wine-runtime:
+    interface: content
+    target: $SNAP/wine-runtime
+    default-provider: wine-platform-runtime
+  wine-5-stable:
+    interface: content
+    target: $SNAP/wine-platform
+    default-provider: wine-platform-5-stable
+  gtk-3-themes:
+    default-provider: gtk-common-themes
+    interface: content
+    target: $SNAP/data-dir/themes
+  icon-themes:
+    interface: content
+    target: $SNAP/data-dir/icons
+    default-provider: gtk-common-themes
+
+environment:
+  NO_AT_BRIDGE: "1"
+  TRICKS: "vb6run comctl32ocx comdlg32ocx richtx32"
+
+apps:
+  scorpion:
+    command: |
+      bin/sommelier "${SNAP}/Scorpion.exe"
+    environment:
+      WINEPREFIX: "$SNAP_USER_COMMON/.wine"
+      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Gecko
+      VIRTDESKTOP: 0
+      LC_ALL: "C.UTF-8"
+    plugs:
+      - opengl
+      - network
+      - hardware-observe
+      - process-control
+      - desktop
+      - desktop-legacy
+      - pulseaudio
+      - wayland
+      - x11
+      - gtk-3-themes
+      - icon-themes
+      - wine-runtime
+      - wine-5-stable
+  wineboot:
+    command: bin/sommelier $SNAP/wine-platform/wine-stable/bin/wineboot
+    environment:
+      WINEPREFIX: "$SNAP_USER_COMMON/.wine"
+      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Gecko
+    plugs:
+      - desktop
+      - desktop-legacy
+      - pulseaudio
+      - wayland
+      - x11
+  winecfg:
+    command: bin/sommelier $SNAP/wine-platform/wine-stable/bin/winecfg
+    environment:
+      WINEPREFIX: "$SNAP_USER_COMMON/.wine"
+      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Gecko
+    plugs:
+      - desktop
+      - desktop-legacy
+      - pulseaudio
+      - wayland
+      - x11
+  winetricks:
+    command: bin/sommelier $SNAP/wine-runtime/bin/winetricks prefix="$WINEPREFIX"
+    environment:
+      WINEPREFIX: "$SNAP_USER_COMMON/.wine"
+      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Gecko
+      LC_ALL: "C.UTF-8"
+      TRICKS: "vb6run comctl32ocx comdlg32ocx richtx32"
+    plugs:
+      - desktop
+      - desktop-legacy
+      - network
+      - pulseaudio
+      - wayland
+      - x11
+
+parts:
+  sommelier:
+    plugin: dump
+    source: ./snap/local/scripts
+    override-build: |
+      snapcraftctl build
+      set -ex
+      mkdir -p $SNAPCRAFT_PART_INSTALL/wine-runtime
+      mkdir -p $SNAPCRAFT_PART_INSTALL/wine-platform
+    organize:
+      'sommelier': bin/
+  scorpion:
+    plugin: dump
+    source: ./snap/local
